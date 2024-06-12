@@ -9,7 +9,7 @@ pipeline {
                     sh '''
                         echo $USERPASS | docker login -u $USERNAME --password-stdin
                         docker run --privileged --rm tonistiigi/binfmt --install all
-                        docker buildx create --name mybuilder --bootstrap --use
+                        docker buildx create --name mybuilder --append --bootstrap --use
                         docker buildx build --platform linux/amd64,linux/arm64 --push -t danixif/polybot:v$BUILD_NUMBER .
                     '''
             }
