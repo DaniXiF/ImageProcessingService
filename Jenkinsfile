@@ -8,8 +8,8 @@ pipeline {
               ) {
                     sh '''
                         echo $USERPASS | docker login -u $USERNAME --password-stdin
-                        docker build -t danixif/polybot:$BUILD_NUMBER .
-                        docker push danixif/polybot:$BUILD_NUMBER
+                        docker run --privileged --rm tonistiigi/binfmt --install all
+                        docker buildx build --platform linux/amd64,linux/arm64 --push -t danixif/polybot:$BUILD_NUMBER .
                     '''
             }
         }
