@@ -4,7 +4,7 @@ pipeline {
         stage('Build docker image'){
             steps {
 		    withCredentials(
-                 [usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERPASS', passwordVariable: 'USERPASS')]
+                 [usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]
               ) {
                     sh '''
                         echo "hello world"
@@ -12,4 +12,5 @@ pipeline {
             }
         }
     }
+}
 }
