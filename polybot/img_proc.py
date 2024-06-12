@@ -1,5 +1,6 @@
 from pathlib import Path
 from matplotlib.image import imread, imsave
+import numpy as np
 
 
 def rgb2gray(rgb):
@@ -52,15 +53,24 @@ class Img:
 
     def rotate(self):
         # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+        self.data = np.rot90(self.data).tolist()
+
 
     def salt_n_pepper(self):
-        # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+        height = len(self.data)
+        width = len(self.data[0])
+        for i in range(height):
+            for j in range(width):
+                if np.random.random() < 0.05:  # Randomly add salt and pepper noise to 5% of pixels
+                    self.data[i][j] = 0  # Pepper
+                elif np.random.random() < 0.05:
+                    self.data[i][j] = 255  # Salt
 
     def concat(self, other_img, direction='horizontal'):
-        # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+        if direction == 'horizontal':
+            self.data = [row1 + row2 for row1, row2 in zip(self.data, other_img.data)]
+        elif direction == 'vertical':
+            self.data.extend(other_img.data)
 
     def segment(self):
         # TODO remove the `raise` below, and write your implementation
