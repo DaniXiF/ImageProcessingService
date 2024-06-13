@@ -26,5 +26,6 @@ Image Balabot is a Telegram bot for image processing.
 ## Contributing
 
 Contributions are welcome! Please fork the repository and create a pull request with your changes. 
+Any additional help is welcomed.
 Thank you !
 
