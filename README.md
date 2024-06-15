@@ -14,7 +14,7 @@ Image Balabot is a Telegram bot for image processing.
 3. Create a Bot in Telegram using `BotFather` bot on Telegram. For additional help to create Bot and Token visit link https://core.telegram.org/bots.
 4. Obtain a Telegram Bot token from BotFather and replace `YOUR_BOT_TOKEN`.  
 5. Add your 'AuthToken' from Telegram to your server configuration, example ngrok `ngrok config add-authtoken <your-authtoken>`
-6. Run the bot by executing `python app.py`.
+6. Run the bot by executing `app.py`.
 
 ## Usage
 
