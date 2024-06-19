@@ -7,9 +7,10 @@ pipeline {
                 sh 'echo "testing"'
             }
         }
-        stage('Lint') {
+        stage('Installing Requirements') {
             steps {
                 sh '''
+                    echo "Installing Requirements"
                     python -m venv venv
                     ./venv/bin/activate
                     pip install -r requirements.txt
