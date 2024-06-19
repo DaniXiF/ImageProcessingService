@@ -10,7 +10,7 @@ pipeline {
         stage('Installing Requirements') {
             steps {
                 sh '''
-                    echo "Installing Requirements"
+                    echo "Installing Requirements for Python"
                     python3 -m venv venv
                     ./venv/bin/activate
                     pip install -r requirements.txt
