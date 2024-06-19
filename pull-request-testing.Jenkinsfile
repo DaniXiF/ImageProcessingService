@@ -11,8 +11,6 @@ pipeline {
             steps {
                 sh '''
                     echo "Installing Requirements for Python"
-                    python3 -m venv venv
-                    source ./venv/bin/activate
                     pip install -r requirements.txt
                     echo 'Hello Jenkins'
                  '''
