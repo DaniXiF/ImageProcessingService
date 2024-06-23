@@ -7,9 +7,16 @@ pipeline {
                 sh 'echo "testing"'
             }
         }
-        stage('Lint') {
+        stage('Installing Requirements') {
             steps {
-                sh 'echo "linting"'
+                sh '''
+                    echo "Installing Requirements for Python"
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r requirements.txt
+                    echo 'Hello Jenkins'
+                 '''
+
             }
         }
         stage('Functional test') {
