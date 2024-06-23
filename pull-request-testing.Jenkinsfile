@@ -11,6 +11,8 @@ pipeline {
             steps {
                 sh '''
                     echo "Installing Requirements for Python"
+                    virtualenv venv --distribute
+                    . venv/bin/activate
                     pip install -r requirements.txt
                     echo 'Hello Jenkins'
                  '''
