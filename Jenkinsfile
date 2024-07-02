@@ -5,8 +5,6 @@ pipeline {
             steps {
 		    withCredentials(
                  [usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]
-                 [usernamePassword(credentialsId: 'snyk', usernameVariable: 'SNYK_TOKEN')]
-
               ) {
                     sh '''
                         echo $USERPASS | docker login -u $USERNAME --password-stdin
