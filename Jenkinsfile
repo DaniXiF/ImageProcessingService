@@ -15,15 +15,13 @@ pipeline {
                     '''
             }
         }
-        stage('Snyk test'){
+    }
+        stage('Trivy'){
             steps{
-            sh '''
-                echo "Snyk Testing"
-                snyk auth $SNYK_TOKEN
-                snyk container test danixif/polybot:v$BUILD_NUMBER
-            '''
+                sh '''
+                    trivy image danixif/polybot:v$BUILD_NUMBER
+                '''
             }
         }
-    }
 }
 }
