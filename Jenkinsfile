@@ -17,8 +17,7 @@ pipeline {
             }
             steps {
                 sh """
-                    pip install pylint
-                    python3 -m pylint polybot/*.py > pylint_result.txt
+                    pylint --output-format=text:pylint_results.txt polybot/*.py 
                 """
                 archiveArtifacts artifacts: 'pylint_result.txt'
             }
