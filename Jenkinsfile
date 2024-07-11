@@ -12,7 +12,7 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.11-alpine'
-                    reuseNode false
+                    reuseNode true
                 }
             }
             steps {
