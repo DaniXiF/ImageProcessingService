@@ -28,7 +28,7 @@ pipeline {
         stage('Push') {
             steps{
                 parallel(
-                    "dockerhub": {
+                    dockerhub: {
                         withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                             sh '''
                                 echo $USERPASS | docker login -u $USERNAME --password-stdin
@@ -37,13 +37,14 @@ pipeline {
                             '''
                         }
                     },
-                    "nexus":{
+                    nexus: {
                         withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
-                        sh '''
-                            echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
-                            docker tag polybot:${env.image_tag}  ${env.nexus_repo}/polybot:${env.image_tag}
-                            docker push ${env.nexus_repo}/polybot:${env.image_tag}
-                        '''
+                            sh '''
+                                echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
+                                docker tag polybot:${env.image_tag}  ${env.nexus_repo}/polybot:${env.image_tag}
+                                docker push ${env.nexus_repo}/polybot:${env.image_tag}
+                            '''
+                        }
                     }
                 )
             }
