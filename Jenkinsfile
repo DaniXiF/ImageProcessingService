@@ -9,18 +9,22 @@ pipeline {
                     sh '''
                         echo $USERPASS | docker login nexus:5000 -u $USERNAME --password-stdin
                         docker run --privileged --rm tonistiigi/binfmt --install all
-                        docker buildx create --name builder --bootstrap --use || docker buildx use builder
                         docker build -t nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER .
 
                     '''
             }
         }
     }
-        stage('Trivy'){
+        stage('Sec Scan Stage'){
+            environment{
+                SNYK_TOKEN = credential("SNYK_TOKEN")
+            }
             steps{
                 sh '''
-                    trivy image nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER
+                    trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER
+
                 '''
+                archiveArtifacts artifacts: 'trivy_report'
             }
         }
          stage('Push'){
