@@ -1,14 +1,21 @@
 pipeline {
     agent any
 
+    options {
+        buildDiscarder daysToKeepStr: '30'
+        disableConcurrentBuilds
+        timestamps()
+    }
+
     environment {
         image_tag="v$BUILD_NUMBER"
         nexus_repo="nexus:5000/repository/docker_images"
         dockerhub_repo="danixif"
     }
+    
 
     stages {
-        stage('Build') {
+        stage('Lint') {
             agent {
                 docker {
                     image 'pipelinecomponents/pylint:edge'
@@ -77,6 +84,14 @@ pipeline {
                     }
                 )
             }
+        }
+    }
+    post{
+        always{
+            cleanWs()
+            sh"""
+                docker rm -f polybot:${env.image_tag} ${env.dockerhub_repo}/polybot:${env.image_tag} ${env.nexus_repo}/polybot:${env.image_tag} || true
+            """
         }
     }
 }
