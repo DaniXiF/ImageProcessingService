@@ -12,7 +12,7 @@ pipeline {
             agent {
                 docker {
                     image 'pipelinecomponents/pylint:edge'
-                     args  '--user root'
+                     args  '-u root'
 
                     reuseNode true
                 }
