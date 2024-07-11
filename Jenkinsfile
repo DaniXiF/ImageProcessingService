@@ -11,7 +11,7 @@ pipeline {
         stage('Build') {
             agent {
                 docker {
-                    image 'python:3.11-alpine'
+                    image 'pipelinecomponents/pylint:edge'
                     reuseNode true
                 }
             }
