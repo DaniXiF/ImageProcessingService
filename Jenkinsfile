@@ -8,6 +8,23 @@ pipeline {
     }
 
     stages {
+        stage('Build') {
+            agent {
+                docker {
+                    image 'python:3.11-alpine'
+                    reuseNode false
+                }
+            }
+            steps {
+                sh """
+                    pip install pylint
+                    python3 -m pylint polybot/*.py > pylint_result.txt
+                """
+                archiveArtifacts artifacts: 'pylint_result.txt'
+            }
+        }
+
+
         stage('Build docker image') {
             steps {
                 sh """
