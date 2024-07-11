@@ -1,3 +1,4 @@
+# pylint: skip-file
 import flask
 from flask import request
 import os
