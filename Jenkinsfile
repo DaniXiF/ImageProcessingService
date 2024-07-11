@@ -63,10 +63,10 @@ pipeline {
             steps{
                 script {
                     parallel(
-                        amd64: {
+                        "Trivy Scan AMD64": {
                             sh "trivy image --platform=linux/amd64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_amd64 polybot:${env.image_tag}-amd64"
                         },
-                        arm64: {
+                        "Trivy Scan ARM64": {
                             sh "trivy image --platform=linux/arm64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_arm64 polybot:${env.image_tag}-arm64"
                         }
                     )
@@ -83,13 +83,13 @@ pipeline {
                                 sh "echo $USERPASS | docker login -u $USERNAME --password-stdin"
                             }       
                             parallel(
-                                arm64: {
+                                "Docker Hub Push ARM64": {
                                     sh"""
                                         docker tag polybot:${env.image_tag}-arm64  ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
                                         docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
                                     """
                                 },
-                                amd64: {
+                                "Docker Hub Push AMD64": {
                                     sh"""
                                         docker tag polybot:${env.image_tag}-amd64  ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
                                         docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
@@ -110,13 +110,13 @@ pipeline {
                                 """
                             }
                             parallel(
-                                arm64: {
+                                "Nexus Push ARM64": {
                                     sh"""
                                         docker tag polybot:${env.image_tag}-arm64  ${env.nexus_repo}/polybot:${env.image_tag}-arm64
                                         docker push ${env.nexus_repo}/polybot:${env.image_tag}-arm64
                                     """
                                 },
-                                amd64: {
+                                "Nexus Push AMD64": {
                                     sh"""
                                         docker tag polybot:${env.image_tag}-amd64  ${env.nexus_repo}/polybot:${env.image_tag}-amd64
                                         docker push ${env.nexus_repo}/polybot:${env.image_tag}-amd64
