@@ -4,13 +4,13 @@ pipeline {
         stage('Build docker image'){
             steps {
 		    withCredentials(
-                 [usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]
+                 [usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]
               ) {
                     sh '''
-                        echo $USERPASS | docker login -u $USERNAME --password-stdin
+                        echo $USERPASS | docker login nexus:5000 -u $USERNAME --password-stdin
                         docker run --privileged --rm tonistiigi/binfmt --install all
                         docker buildx create --name builder --bootstrap --use || docker buildx use builder
-                        docker buildx build --platform linux/amd64,linux/arm64 --push -t danixif/polybot:v$BUILD_NUMBER .
+                        docker build -t nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER .
 
                     '''
             }
@@ -19,7 +19,14 @@ pipeline {
         stage('Trivy'){
             steps{
                 sh '''
-                    trivy image danixif/polybot:v$BUILD_NUMBER
+                    trivy image nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER
+                '''
+            }
+        }
+         stage('Push'){
+            steps{
+                sh '''
+                    docker push nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER
                 '''
             }
         }
