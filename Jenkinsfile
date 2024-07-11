@@ -23,6 +23,17 @@ pipeline {
                 """
                 archiveArtifacts artifacts: 'pylint_result.txt'
             }
+            post {
+                always {
+                    sh 'cat pylint_result.txt'
+                    recordIssues (
+                        enabledForFailure: true,
+                        aggregatingResults: true,
+                        tools: [pyLint(name: 'Pylint', pattern: 'pylint_result.txt')]
+                    )
+                }
+            }
+
         }
 
 
