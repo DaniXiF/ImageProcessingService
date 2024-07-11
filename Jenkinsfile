@@ -16,9 +16,6 @@ pipeline {
         }
     }
         stage('Sec Scan Stage'){
-            environment{
-                SNYK_TOKEN = credential("SNYK_TOKEN")
-            }
             steps{
                 sh '''
                     trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report nexus:5000/repository/docker_images/polybot:v$BUILD_NUMBER
