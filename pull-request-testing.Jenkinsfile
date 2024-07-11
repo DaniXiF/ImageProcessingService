@@ -12,7 +12,7 @@ pipeline {
                 sh 'echo "linting"'
             }
         }
-        stage('Functional test') {
+        stage('Functional  test') {
             steps {
                 sh 'echo "testing"'
             }
