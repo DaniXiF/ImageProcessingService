@@ -19,17 +19,17 @@ pipeline {
             }
             steps {
                 sh """
-                    pylint --exit-zero --output-format=text:pylint_results.txt polybot/*.py 
+                    pylint --exit-zero --output-format=parseable --reports=no polybot/*.py > pylint.log
                 """
-                archiveArtifacts artifacts: 'pylint_result.txt'
+                archiveArtifacts artifacts: 'pylint.log'
             }
             post {
                 always {
-                    sh 'cat pylint_result.txt'
+                    sh 'cat pylint.log'
                     recordIssues (
                         enabledForFailure: true,
                         aggregatingResults: true,
-                        tools: [pyLint(name: 'Pylint', pattern: 'pylint_result.txt')]
+                        tools: [pyLint(name: 'Pylint', pattern: 'pylint.log')]
                     )
                 }
             }
