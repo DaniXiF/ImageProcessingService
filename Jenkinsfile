@@ -10,18 +10,18 @@ pipeline {
     stages {
         stage('Build docker image') {
             steps {
-                sh '''
+                sh """
                     docker run --privileged --rm tonistiigi/binfmt --install all
                     docker build -t polybot:${env.image_tag} .
-                '''
+                """
             }
         }
         stage('Sec Scan Stage'){
             steps{
-                sh '''
+                sh """
                     trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report polybot:${env.image_tag}
 
-                '''
+                """
                 archiveArtifacts artifacts: 'trivy_report'
             }
         }
@@ -30,20 +30,20 @@ pipeline {
                 parallel(
                     dockerhub: {
                         withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
-                            sh '''
+                            sh """
                                 echo $USERPASS | docker login -u $USERNAME --password-stdin
                                 docker tag polybot:${env.image_tag}  ${env.dockerhub_repo}/polybot:${env.image_tag}
                                 docker push ${env.dockerhub_repo}/polybot:${env.image_tag}
-                            '''
+                            """
                         }
                     },
                     nexus: {
                         withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
-                            sh '''
+                            sh """
                                 echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
                                 docker tag polybot:${env.image_tag}  ${env.nexus_repo}/polybot:${env.image_tag}
                                 docker push ${env.nexus_repo}/polybot:${env.image_tag}
-                            '''
+                            """
                         }
                     }
                 )
