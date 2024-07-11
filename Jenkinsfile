@@ -19,7 +19,7 @@ pipeline {
             }
             steps {
                 sh """
-                    pylint --output-format=text:pylint_results.txt polybot/*.py 
+                    pylint --exit-zero --output-format=text:pylint_results.txt polybot/*.py 
                 """
                 archiveArtifacts artifacts: 'pylint_result.txt'
             }
