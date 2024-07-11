@@ -87,7 +87,7 @@ pipeline {
                                     docker tag polybot:${env.image_tag}-arm64  ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
                                     docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
                                 """
-                            }
+                            },
                             amd64: {
                                 sh"""
                                     docker tag polybot:${env.image_tag}-amd64  ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
