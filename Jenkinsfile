@@ -45,33 +45,62 @@ pipeline {
 
 
         stage('Build docker image') {
+            
             steps {
-                sh """
-                    docker run --privileged --rm tonistiigi/binfmt --install all
-                    docker build -t polybot:${env.image_tag} .
-                """
+                sh "docker run --privileged --rm tonistiigi/binfmt --install all"
+                parallel(
+                    amd64: {
+                        sh "docker build --platform=linux/amd64 -t polybot:${env.image_tag}-amd64 ."
+                    },
+                    arm64: {
+                        sh " docker build --platform=linux/arm64 -t polybot:${env.image_tag}-arm64 ."
+                    }
+                )
             }
-        }
+        }    
         stage('Sec Scan Stage'){
             steps{
-                sh """
-                    trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report polybot:${env.image_tag}
-
-                """
-                archiveArtifacts artifacts: 'trivy_report'
+                parallel(
+                    amd64: {
+                        sh "trivy image --platform=linux/amd64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report polybot:${env.image_tag}-amd64"
+                    },
+                    arm64: {
+                        sh "trivy image --platform=linux/arm64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report polybot:${env.image_tag}-arm64"
+                    }
+                )
+                archiveArtifacts artifacts: 'trivy_report_*'
             }
         }
         stage('Push') {
             steps{
+                sh """
+                    docker manifest create polybot:${env.image_tag} -a polybot:${env.image_tag}-arm64 -a polybot:${env.image_tag}-amd64
+                """
                 parallel(
                     dockerhub: {
                         withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
-                            sh """
-                                echo $USERPASS | docker login -u $USERNAME --password-stdin
-                                docker tag polybot:${env.image_tag}  ${env.dockerhub_repo}/polybot:${env.image_tag}
-                                docker push ${env.dockerhub_repo}/polybot:${env.image_tag}
-                            """
-                        }
+                            sh "echo $USERPASS | docker login -u $USERNAME --password-stdin"
+                        }       
+                        parallel(
+                            arm64: {
+                                sh"""
+                                    docker tag polybot:${env.image_tag}-arm64  ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
+                                    docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
+                                """
+                            }
+                            amd64: {
+                                sh"""
+                                    docker tag polybot:${env.image_tag}-amd64  ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                    docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                """
+                            }
+                        )
+                        sh """
+                            docker manifest create ${env.dockerhub_repo}/polybot:${env.image_tag} \
+                                ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64 \
+                                ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                            docker manifest push -p ${env.dockerhub_repo}/polybot:${env.image_tag}
+                        """        
                     },
                     nexus: {
                         withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
@@ -79,10 +108,14 @@ pipeline {
                                 echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
                                 docker tag polybot:${env.image_tag}  ${env.nexus_repo}/polybot:${env.image_tag}
                                 docker push ${env.nexus_repo}/polybot:${env.image_tag}
+                                docker manifest push ${env.nexus_repo}/polybot:${env.image_tag}
                             """
                         }
                     }
                 )
+                sh """ 
+                
+                """
             }
         }
     }
