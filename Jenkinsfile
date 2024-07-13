@@ -78,7 +78,7 @@ pipeline {
             steps{
                 script {
                     parallel(
-                        dockerhub: {
+                        Dockerhub: {
                             withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                                 sh "echo $USERPASS | docker login -u $USERNAME --password-stdin"
                             }       
@@ -103,7 +103,7 @@ pipeline {
                                 docker manifest push -p ${env.dockerhub_repo}/polybot:${env.image_tag}
                             """
                         },
-                        nexus: {
+                        Nexus: {
                             withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                                 sh """
                                     echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
