@@ -456,7 +456,7 @@ check-protected-access-in-special-methods=no
 # List of modules that can be imported at any level, not just the top level
 # one.
 allow-any-import-level=
-ignored-modules=telebot,loguru,matplotlib,requests,flask,pip,setuptools,certifi,urllib3,idna,pyTelegramBotAPI
+ignored-modules=telebot,loguru,matplotlib,requests,flask,pip,setuptools,certifi,urllib3,idna,pyTelegramBotAPI,polybot.img_proc,numpy
 
 # Allow wildcard imports from modules that define __all__.
 allow-wildcard-with-all=no
