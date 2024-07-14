@@ -1,7 +1,6 @@
 pipeline {
     agent any
 
-
     options {
         buildDiscarder(logRotator(daysToKeepStr: '30'))
         disableConcurrentBuilds()
