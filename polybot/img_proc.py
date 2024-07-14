@@ -1,3 +1,4 @@
+#pylint: disable=C0411,R0915,R1705,W1309
 from pathlib import Path
 from matplotlib.image import imread, imsave
 import numpy as np
