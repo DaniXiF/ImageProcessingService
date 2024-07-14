@@ -26,7 +26,6 @@ pipeline {
             }
             steps {
                 sh """
-                    pip install -r requirements.txt
                     pylint --exit-zero --output-format=parseable --reports=no polybot/*.py > pylint.log
                 """
                 archiveArtifacts artifacts: 'pylint.log'
