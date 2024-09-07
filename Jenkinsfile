@@ -1,5 +1,26 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml '''
+                apiVersion: v1
+                kind: Pod
+                spec:
+                  containers:
+                  - name: dind
+                    image: docker:dind
+                    command:
+                    - dockerd
+                    - --group=1000
+                    - --insecure-registry=nexus:5000
+                    securityContext:
+                      privileged: true
+                  - name: jnlp
+                    image: jenkins/inbound-agent
+                    tty: true
+                '''
+        }
+    }
+
 
     options {
         buildDiscarder(logRotator(daysToKeepStr: '30'))
@@ -15,47 +36,49 @@ pipeline {
     
 
     stages {
-        stage('Lint') {
-            agent {
-                docker {
-                    image 'pipelinecomponents/pylint:edge'
-                     args  '-u root'
+        // stage('Lint') {
+        //     agent {
+        //         docker {
+        //             image 'pipelinecomponents/pylint:edge'
+        //              args  '-u root'
 
-                    reuseNode true
-                }
-            }
-            steps {
-                sh """
-                    pylint --exit-zero --output-format=parseable --reports=no polybot/*.py > pylint.log
-                """
-                archiveArtifacts artifacts: 'pylint.log'
-            }
-            post {
-                always {
-                    sh 'cat pylint.log'
-                    recordIssues (
-                        enabledForFailure: true,
-                        aggregatingResults: true,
-                        tools: [pyLint(name: 'Pylint', pattern: 'pylint.log')]
-                    )
-                }
-            }
+        //             reuseNode true
+        //         }
+        //     }
+        //     steps {
+        //         sh """
+        //             pylint --exit-zero --output-format=parseable --reports=no polybot/*.py > pylint.log
+        //         """
+        //         archiveArtifacts artifacts: 'pylint.log'
+        //     }
+        //     post {
+        //         always {
+        //             sh 'cat pylint.log'
+        //             recordIssues (
+        //                 enabledForFailure: true,
+        //                 aggregatingResults: true,
+        //                 tools: [pyLint(name: 'Pylint', pattern: 'pylint.log')]
+        //             )
+        //         }
+        //     }
 
-        }
+        // }
 
 
         stage('Build docker image') {
             steps {
-                script {
-                    sh "docker run --privileged --rm tonistiigi/binfmt --install all"
-                    parallel(
-                        amd64: {
-                            sh "docker build --platform=linux/amd64 -t polybot:${env.image_tag}-amd64 ."
-                        },
-                        arm64: {
-                            sh " docker build --platform=linux/arm64 -t polybot:${env.image_tag}-arm64 ."
-                        }
-                    )
+                container('dind') {
+                    script {
+                        sh "docker run --privileged --rm tonistiigi/binfmt --install all"
+                        parallel(
+                            amd64: {
+                                sh "docker build --platform=linux/amd64 -t polybot:${env.image_tag}-amd64 ."
+                            },
+                            arm64: {
+                                sh " docker build --platform=linux/arm64 -t polybot:${env.image_tag}-arm64 ."
+                            }
+                        )
+                    }
                 }
             }
         }    

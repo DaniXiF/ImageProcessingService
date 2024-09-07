@@ -1,8 +1,8 @@
-#pylint: disable=C0411,R0915,R1705,W1309
+#pylint: disable=
 from pathlib import Path
 from matplotlib.image import imread, imsave
 import numpy as np
-
+#pylint: enable=
 
 def rgb2gray(rgb):
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
