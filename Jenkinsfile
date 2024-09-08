@@ -17,8 +17,6 @@ pipeline {
                   - name: jnlp
                     image: jenkins/inbound-agent
                     tty: true
-                  - name: trivy
-                    image: aquasec/trivy:latest
                 '''
         }
     }
