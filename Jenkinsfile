@@ -7,7 +7,7 @@ pipeline {
                 spec:
                   containers:
                   - name: dind
-                    image: docker:dind
+                    image: danixif/dind:v1
                     command:
                     - dockerd
                     - --group=1000
@@ -86,7 +86,7 @@ pipeline {
         }    
         stage('Sec Scan Stage'){
             steps{
-                container(trivy)
+                container('trivy')
                     script {
                         parallel(
                             "Trivy Scan AMD64": {
