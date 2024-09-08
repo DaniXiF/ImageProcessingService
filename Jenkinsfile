@@ -86,7 +86,7 @@ pipeline {
         }    
         stage('Sec Scan Stage'){
             steps{
-                container('trivy')
+                container('dind')
                     script {
                         parallel(
                             "Trivy Scan AMD64": {
