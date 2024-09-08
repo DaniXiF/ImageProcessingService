@@ -134,12 +134,5 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            cleanWs()
-            sh """
-                docker image rm -f polybot:${env.image_tag} ${env.dockerhub_repo}/polybot:${env.image_tag} ${env.nexus_repo}/polybot:${env.image_tag} || true
-            """
-        }
-    }
+
 }
