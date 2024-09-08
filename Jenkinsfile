@@ -73,8 +73,8 @@ pipeline {
 
         stage('Push') {
             steps {
-                script {
-                    container('dind')    
+                container('dind')    
+                    script {
                         parallel(
                             Dockerhub: {
                                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
@@ -129,7 +129,7 @@ pipeline {
                                 """
                             }
                         )
-                }
+                    }
             }
         }
     }
