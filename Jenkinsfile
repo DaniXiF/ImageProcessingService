@@ -17,6 +17,8 @@ pipeline {
                   - name: jnlp
                     image: jenkins/inbound-agent
                     tty: true
+                  - name: trivy
+                    image: aquasec/trivy:latest
                 '''
         }
     }
@@ -84,17 +86,18 @@ pipeline {
         }    
         stage('Sec Scan Stage'){
             steps{
-                script {
-                    parallel(
-                        "Trivy Scan AMD64": {
-                            sh "trivy image --platform=linux/amd64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_amd64 polybot:${env.image_tag}-amd64"
-                        },
-                        "Trivy Scan ARM64": {
-                            sh "trivy image --platform=linux/arm64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_arm64 polybot:${env.image_tag}-arm64"
-                        }
-                    )
-                    archiveArtifacts artifacts: 'trivy_report_*'
-                }
+                container(trivy)
+                    script {
+                        parallel(
+                            "Trivy Scan AMD64": {
+                                sh "trivy image --platform=linux/amd64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_amd64 polybot:${env.image_tag}-amd64"
+                            },
+                            "Trivy Scan ARM64": {
+                                sh "trivy image --platform=linux/arm64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_arm64 polybot:${env.image_tag}-arm64"
+                            }
+                        )
+                        archiveArtifacts artifacts: 'trivy_report_*'
+                    }
             }
         }
         stage('Push') {
