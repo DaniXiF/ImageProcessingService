@@ -74,60 +74,61 @@ pipeline {
         stage('Push') {
             steps {
                 script {
-                    parallel(
-                        Dockerhub: {
-                            withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
-                                sh "echo $USERPASS | docker login -u $USERNAME --password-stdin"
-                            }
-                            parallel(
-                                "Docker Hub Push ARM64": {
+                    container('dind')    
+                        parallel(
+                            Dockerhub: {
+                                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                                    sh "echo $USERPASS | docker login -u $USERNAME --password-stdin"
+                                }
+                                parallel(
+                                    "Docker Hub Push ARM64": {
+                                        sh """
+                                            docker tag polybot:${env.image_tag}-arm64  ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
+                                            docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
+                                        """
+                                    },
+                                    "Docker Hub Push AMD64": {
+                                        sh """
+                                            docker tag polybot:${env.image_tag}-amd64  ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                            docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                        """
+                                    }
+                                )
+                                sh """
+                                    docker manifest create ${env.dockerhub_repo}/polybot:${env.image_tag} \
+                                        ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64 \
+                                        ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                    docker manifest push -p ${env.dockerhub_repo}/polybot:${env.image_tag}
+                                """
+                            },
+                            Nexus: {
+                                withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                                     sh """
-                                        docker tag polybot:${env.image_tag}-arm64  ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
-                                        docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
-                                    """
-                                },
-                                "Docker Hub Push AMD64": {
-                                    sh """
-                                        docker tag polybot:${env.image_tag}-amd64  ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
-                                        docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                        echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
                                     """
                                 }
-                            )
-                            sh """
-                                docker manifest create ${env.dockerhub_repo}/polybot:${env.image_tag} \
-                                    ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64 \
-                                    ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
-                                docker manifest push -p ${env.dockerhub_repo}/polybot:${env.image_tag}
-                            """
-                        },
-                        Nexus: {
-                            withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                                parallel(
+                                    "Nexus Push ARM64": {
+                                        sh """
+                                            docker tag polybot:${env.image_tag}-arm64  ${env.nexus_repo}/polybot:${env.image_tag}-arm64
+                                            docker push ${env.nexus_repo}/polybot:${env.image_tag}-arm64
+                                        """
+                                    },
+                                    "Nexus Push AMD64": {
+                                        sh """
+                                            docker tag polybot:${env.image_tag}-amd64  ${env.nexus_repo}/polybot:${env.image_tag}-amd64
+                                            docker push ${env.nexus_repo}/polybot:${env.image_tag}-amd64
+                                        """
+                                    }
+                                )
                                 sh """
-                                    echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
+                                    docker manifest create --insecure ${env.nexus_repo}/polybot:${env.image_tag} \
+                                        ${env.nexus_repo}/polybot:${env.image_tag}-arm64 \
+                                        ${env.nexus_repo}/polybot:${env.image_tag}-amd64
+                                    docker manifest push --insecure -p ${env.nexus_repo}/polybot:${env.image_tag}
                                 """
                             }
-                            parallel(
-                                "Nexus Push ARM64": {
-                                    sh """
-                                        docker tag polybot:${env.image_tag}-arm64  ${env.nexus_repo}/polybot:${env.image_tag}-arm64
-                                        docker push ${env.nexus_repo}/polybot:${env.image_tag}-arm64
-                                    """
-                                },
-                                "Nexus Push AMD64": {
-                                    sh """
-                                        docker tag polybot:${env.image_tag}-amd64  ${env.nexus_repo}/polybot:${env.image_tag}-amd64
-                                        docker push ${env.nexus_repo}/polybot:${env.image_tag}-amd64
-                                    """
-                                }
-                            )
-                            sh """
-                                docker manifest create --insecure ${env.nexus_repo}/polybot:${env.image_tag} \
-                                    ${env.nexus_repo}/polybot:${env.image_tag}-arm64 \
-                                    ${env.nexus_repo}/polybot:${env.image_tag}-amd64
-                                docker manifest push --insecure -p ${env.nexus_repo}/polybot:${env.image_tag}
-                            """
-                        }
-                    )
+                        )
                 }
             }
         }
