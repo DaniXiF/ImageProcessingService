@@ -73,7 +73,7 @@ pipeline {
 
         stage('Push') {
             steps {
-                container('dind') {   
+                container('dind') {
                     script {
                         parallel(
                             Dockerhub: {
@@ -83,13 +83,13 @@ pipeline {
                                 parallel(
                                     "Docker Hub Push ARM64": {
                                         sh """
-                                            docker tag polybot:${env.image_tag}-arm64  ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
+                                            docker tag polybot:${env.image_tag}-arm64 ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
                                             docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-arm64
                                         """
                                     },
                                     "Docker Hub Push AMD64": {
                                         sh """
-                                            docker tag polybot:${env.image_tag}-amd64  ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
+                                            docker tag polybot:${env.image_tag}-amd64 ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
                                             docker push ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
                                         """
                                     }
@@ -100,38 +100,11 @@ pipeline {
                                         ${env.dockerhub_repo}/polybot:${env.image_tag}-amd64
                                     docker manifest push -p ${env.dockerhub_repo}/polybot:${env.image_tag}
                                 """
-                            },
-                            Nexus: {
-                                withCredentials([usernamePassword(credentialsId: 'Nexus_danchik', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
-                                    sh """
-                                        echo $USERPASS | docker login ${env.nexus_repo} -u $USERNAME --password-stdin
-                                    """
-                                }
-                                parallel(
-                                    "Nexus Push ARM64": {
-                                        sh """
-                                            docker tag polybot:${env.image_tag}-arm64  ${env.nexus_repo}/polybot:${env.image_tag}-arm64
-                                            docker push ${env.nexus_repo}/polybot:${env.image_tag}-arm64
-                                        """
-                                    },
-                                    "Nexus Push AMD64": {
-                                        sh """
-                                            docker tag polybot:${env.image_tag}-amd64  ${env.nexus_repo}/polybot:${env.image_tag}-amd64
-                                            docker push ${env.nexus_repo}/polybot:${env.image_tag}-amd64
-                                        """
-                                    }
-                                )
-                                sh """
-                                    docker manifest create --insecure ${env.nexus_repo}/polybot:${env.image_tag} \
-                                        ${env.nexus_repo}/polybot:${env.image_tag}-arm64 \
-                                        ${env.nexus_repo}/polybot:${env.image_tag}-amd64
-                                    docker manifest push --insecure -p ${env.nexus_repo}/polybot:${env.image_tag}
-                                """
                             }
                         )
                     }
+                }
             }
         }
     }
-}
 }
