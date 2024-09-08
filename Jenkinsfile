@@ -96,6 +96,7 @@ pipeline {
                         )
                         archiveArtifacts artifacts: 'trivy_report_*'
                     }
+                }    
             }
         }
         stage('Push') {
