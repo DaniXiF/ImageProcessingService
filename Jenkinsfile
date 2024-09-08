@@ -73,7 +73,7 @@ pipeline {
 
         stage('Push') {
             steps {
-                container('dind')    
+                container('dind') {   
                     script {
                         parallel(
                             Dockerhub: {
@@ -133,6 +133,4 @@ pipeline {
             }
         }
     }
-
-
 }
