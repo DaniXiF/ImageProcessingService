@@ -15,6 +15,7 @@ pipeline {
                     - --insecure-registry=nexus:5000
                     securityContext:
                       privileged: true
+                    tty: true
                   - name: jnlp
                     image: jenkins/inbound-agent
                     tty: true
@@ -75,10 +76,11 @@ pipeline {
         stage('Push to Amazon ECR') {
             steps {
                 withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding',
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                credentialsId: 'dev-user-aws-credentials']]) 
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
+                    credentialsId: 'dev-user-aws-credentials'
+                ]]) {
                     container('dind') {
                         script {
                             sh """
@@ -101,6 +103,7 @@ pipeline {
                             """
                         }
                     }
+                }
             }
         }
     }
