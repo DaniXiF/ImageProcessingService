@@ -7,7 +7,7 @@ pipeline {
                 spec:
                   containers:
                   - name: dind
-                    image: danixif/dind:v1
+                    image: danixif/dind:v2
                     command:
                     - dockerd
                     args:
@@ -102,6 +102,11 @@ pipeline {
                                 """
                             }
                         )
+                        sh """
+                            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 023196572641.dkr.ecr.us-east-1.amazonaws.com
+                            docker tag polybot:${env.image_tag}-amd64 023196572641.dkr.ecr.us-east-1.amazonaws.com/danchik-app/polybot-repo:${env.image_tag}
+                            docker push 023196572641.dkr.ecr.us-east-1.amazonaws.com/danchik-app/polybot-repo:${env.image_tag}
+                        """
                     }
                 }
             }
