@@ -30,8 +30,9 @@ pipeline {
 
     environment {
         image_tag = "v$BUILD_NUMBER"
-        nexus_repo = "nexus:5000/repository/docker_images"
-        dockerhub_repo = "danixif"
+        ecr_registry = "023196572641.dkr.ecr.us-east-1.amazonaws.com"
+        ecr_repo = "${ecr_registry}/danchik-app/polybot-repo"
+        aws_region = "us-east-1"
     }
 
     stages {
@@ -71,17 +72,35 @@ pipeline {
             }
         }
 
-        stage('Push') {
+        stage('Push to Amazon ECR') {
             steps {
-                container('dind') {
-                    script {
-                        sh """
-                            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 023196572641.dkr.ecr.us-east-1.amazonaws.com
-                            docker tag polybot:${env.image_tag}-amd64 023196572641.dkr.ecr.us-east-1.amazonaws.com/danchik-app/polybot-repo:${env.image_tag}-amd64
-                            docker push 023196572641.dkr.ecr.us-east-1.amazonaws.com/danchik-app/polybot-repo:${env.image_tag}-amd64
-                        """
+                withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
+                credentialsId: 'dev-user-aws-credentials']]) 
+                    container('dind') {
+                        script {
+                            sh """
+                                # Authenticate Docker to the ECR registry
+                                aws ecr get-login-password --region ${env.aws_region} | docker login --username AWS --password-stdin ${env.ecr_registry}
+
+                                # Tag the images for ECR
+                                docker tag polybot:${env.image_tag}-amd64 ${env.ecr_repo}:${env.image_tag}-amd64
+                                docker tag polybot:${env.image_tag}-arm64 ${env.ecr_repo}:${env.image_tag}-arm64
+
+                                # Push the images to ECR
+                                docker push ${env.ecr_repo}:${env.image_tag}-amd64
+                                docker push ${env.ecr_repo}:${env.image_tag}-arm64
+
+                                # Create and push multi-architecture manifest
+                                docker manifest create ${env.ecr_repo}:${env.image_tag} \\
+                                    --amend ${env.ecr_repo}:${env.image_tag}-amd64 \\
+                                    --amend ${env.ecr_repo}:${env.image_tag}-arm64
+                                docker manifest push ${env.ecr_repo}:${env.image_tag}
+                            """
+                        }
                     }
-                }
             }
         }
     }
