@@ -1,5 +1,5 @@
 pipeline {
-    agent {
+    agent {(label 'ec2-fleet')
         kubernetes {
             yaml '''
                 apiVersion: v1
@@ -7,7 +7,7 @@ pipeline {
                 spec:
                   containers:
                   - name: dind
-                    image: danixif/dind:v2
+                    image: danixif/dind:v4
                     command:
                     - dockerd
                     args:
@@ -79,7 +79,7 @@ pipeline {
                     $class: 'AmazonWebServicesCredentialsBinding',
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                    credentialsId: 'dev-user-aws-credentials'
+                    credentialsId: 'aws-key'
                 ]]) {
                     container('dind') {
                         script {
