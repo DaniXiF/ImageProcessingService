@@ -46,10 +46,10 @@ pipeline {
                 script {
                     parallel(
                         "Trivy Scan AMD64": {
-                            sh "trivy image --platform=linux/amd64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_amd64 polybot:${env.image_tag}-amd64"
+                            sh "trivy image  --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_amd64 polybot:${env.image_tag}-amd64"
                         },
                         "Trivy Scan ARM64": {
-                            sh "trivy image --platform=linux/arm64 --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_arm64 polybot:${env.image_tag}-arm64"
+                            sh "trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_arm64 polybot:${env.image_tag}-arm64"
                         }
                     )
                     archiveArtifacts artifacts: 'trivy_report_*'
