@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'ec2-fleet'
+        label 'ec2-fleet-ohio'
     }
 
     options {
@@ -14,6 +14,7 @@ pipeline {
         ecr_registry = "023196572641.dkr.ecr.us-east-1.amazonaws.com"
         ecr_repo = "${ecr_registry}/danchik-app/polybot-repo"
         aws_region = "us-east-1"
+        s3_bucket = "danchik-s3liter-bucket" // Your S3 bucket environment variable
     }
 
     stages {
@@ -53,6 +54,25 @@ pipeline {
                         }
                     )
                     archiveArtifacts artifacts: 'trivy_report_*'
+                }
+            }
+        }
+
+        stage('Upload Trivy Scan Reports to S3') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
+                    credentialsId: 'aws-key'
+                ]]) {
+                    script {
+                        // Upload the Trivy scan reports to S3
+                        sh """
+                            aws s3 cp trivy_report_amd64 s3://${env.s3_bucket}/trivy_reports/trivy_report_amd64_${env.BUILD_NUMBER}.txt
+                            aws s3 cp trivy_report_arm64 s3://${env.s3_bucket}/trivy_reports/trivy_report_arm64_${env.BUILD_NUMBER}.txt
+                        """
+                    }
                 }
             }
         }
