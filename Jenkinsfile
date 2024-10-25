@@ -13,7 +13,7 @@ pipeline {
         image_tag = "v$BUILD_NUMBER"
         ecr_registry = "023196572641.dkr.ecr.us-east-2.amazonaws.com/"
         ecr_repo = "${ecr_registry}/danchik/polybot-app"
-        aws_region = "us-east-1"
+        aws_region = "us-east-2"
         s3_bucket = "danchik-s3liter-bucket" // Your S3 bucket environment variable
     }
 
