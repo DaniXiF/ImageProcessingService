@@ -11,12 +11,12 @@ pipeline {
         aws_region = "us-east-2"               // Replace with your AWS region
         ecr_registry = "023196572641.dkr.ecr.us-east-2.amazonaws.com"  // Replace with your AWS ECR registry
         ecr_repo = "${ecr_registry}/danchik/polybot-app" // Replace with your ECR repository
-        image_tag = "v$BUILD_NUMBER"           // Image tag from the build pipeline
+        image_tag = "v361"           // Image tag from the build pipeline
         cluster_name = "eks-X10-prod-01"     // Replace with your EKS cluster name
         kubeconfig_path = "~/.kube/config"     // Path to kubeconfig
         deployment_name = "polybot-app"    // Replace with your Kubernetes deployment name
         container_name = "polybot"      // Replace with your container name in the deployment
-        namespace = "bino-dan"                  // Kubernetes namespace
+        namespace = "bino-dan-polybot"                  // Kubernetes namespace
     }
 
     stages {
