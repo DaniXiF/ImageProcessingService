@@ -62,30 +62,30 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 script {
-                    // Create or update the deployment without any checks
+                    // Directly apply the deployment configuration
                     sh """
                         kubectl apply -f - <<EOF
-                        apiVersion: apps/v1
-                        kind: Deployment
-                        metadata:
-                          name: ${env.deployment_name}
-                          namespace: ${env.namespace}
-                        spec:
-                          replicas: 1
-                          selector:
-                            matchLabels:
-                              app: ${env.deployment_name}
-                          template:
-                            metadata:
-                              labels:
-                                app: ${env.deployment_name}
-                            spec:
-                              containers:
-                              - name: ${env.container_name}
-                                image: ${env.ecr_repo}:${env.image_tag}
-                                ports:
-                                - containerPort: 80
-                        EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${env.deployment_name}
+  namespace: ${env.namespace}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${env.deployment_name}
+  template:
+    metadata:
+      labels:
+        app: ${env.deployment_name}
+    spec:
+      containers:
+      - name: ${env.container_name}
+        image: ${env.ecr_repo}:${env.image_tag}
+        ports:
+        - containerPort: 80
+EOF
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
                 }
