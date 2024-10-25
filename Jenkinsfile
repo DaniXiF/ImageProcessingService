@@ -17,6 +17,7 @@ pipeline {
         deployment_name = "polybot-app"    // Replace with your Kubernetes deployment name
         container_name = "polybot"      // Replace with your container name in the deployment
         namespace = "bino-dan-polybot"                  // Kubernetes namespace
+        sns_topic_arn = "arn:aws:sns:us-east-2:023196572641:Polybot_Deployment" // Replace with your SNS Topic ARN
     }
 
     stages {
@@ -79,9 +80,21 @@ pipeline {
     post {
         success {
             echo "Deployment to EKS completed successfully."
+            sendSNSNotification("SUCCESS", "Deployment to EKS completed successfully for ${env.deployment_name}")
         }
         failure {
             echo "Deployment failed. Check logs for details."
+            sendSNSNotification("FAILURE", "Deployment failed for ${env.deployment_name}. Check logs for details.")
         }
     }
+}
+
+def sendSNSNotification(status, message) {
+    sh """
+        aws sns publish \
+            --region ${env.aws_region} \
+            --topic-arn ${env.sns_topic_arn} \
+            --message "Deployment Status: ${status}\\nMessage: ${message}" \
+            --subject "Deployment ${status}: ${env.deployment_name}"
+    """
 }
