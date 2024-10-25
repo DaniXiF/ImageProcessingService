@@ -59,17 +59,33 @@ pipeline {
             }
         }
 
-        stage('Create or Update Deployment') {
+        stage('Deploy Application') {
             steps {
                 script {
-                    // Check if deployment exists, if not, create it; else, update the image
+                    // Create or update the deployment without any checks
                     sh """
-                        if kubectl get deployment ${env.deployment_name} -n ${env.namespace}; then
-                            kubectl set image deployment/${env.deployment_name} ${env.container_name}=${env.ecr_repo}:${env.image_tag} -n ${env.namespace}
-                        else
-                            kubectl create deployment ${env.deployment_name} --image=${env.ecr_repo}:${env.image_tag} -n ${env.namespace}
-                            kubectl expose deployment ${env.deployment_name} --type=ClusterIP --port=80 -n ${env.namespace}
-                        fi
+                        kubectl apply -f - <<EOF
+                        apiVersion: apps/v1
+                        kind: Deployment
+                        metadata:
+                          name: ${env.deployment_name}
+                          namespace: ${env.namespace}
+                        spec:
+                          replicas: 1
+                          selector:
+                            matchLabels:
+                              app: ${env.deployment_name}
+                          template:
+                            metadata:
+                              labels:
+                                app: ${env.deployment_name}
+                            spec:
+                              containers:
+                              - name: ${env.container_name}
+                                image: ${env.ecr_repo}:${env.image_tag}
+                                ports:
+                                - containerPort: 80
+                        EOF
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
                 }
