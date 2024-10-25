@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'ec2-fleet-ohio'
+        label 'ec2-fleet'
     }
 
     options {
@@ -64,7 +64,7 @@ pipeline {
                     $class: 'AmazonWebServicesCredentialsBinding',
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                    credentialsId: 'aws-key'
+                    credentialsId: 'Danchik AWS US-2-Ohio'
                 ]]) {
                     script {
                         // Upload the Trivy scan reports to S3
@@ -83,7 +83,7 @@ pipeline {
                     $class: 'AmazonWebServicesCredentialsBinding',
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                    credentialsId: 'aws-key'
+                    credentialsId: 'Danchik AWS US-2-Ohio'
                 ]]) {
                     script {
                         sh """
