@@ -58,12 +58,17 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
+        stage('Create or Update Deployment') {
             steps {
                 script {
-                    // Set the image for the deployment and initiate the rollout
+                    // Check if deployment exists, if not, create it; else, update the image
                     sh """
-                        kubectl set image deployment/${env.deployment_name} ${env.container_name}=${env.ecr_repo}:${env.image_tag} -n ${env.namespace}
+                        if kubectl get deployment ${env.deployment_name} -n ${env.namespace}; then
+                            kubectl set image deployment/${env.deployment_name} ${env.container_name}=${env.ecr_repo}:${env.image_tag} -n ${env.namespace}
+                        else
+                            kubectl create deployment ${env.deployment_name} --image=${env.ecr_repo}:${env.image_tag} -n ${env.namespace}
+                            kubectl expose deployment ${env.deployment_name} --type=ClusterIP --port=80 -n ${env.namespace}
+                        fi
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
                 }
