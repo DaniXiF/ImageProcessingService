@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'ec2-fleet'
-    }
+    agent { label 'ec2-fleet' }
 
     options {
         buildDiscarder(logRotator(daysToKeepStr: '30'))
@@ -10,56 +8,19 @@ pipeline {
     }
 
     environment {
-        image_tag = "v$BUILD_NUMBER"
-        ecr_registry = "023196572641.dkr.ecr.us-east-2.amazonaws.com"
-        ecr_repo = "${ecr_registry}/danchik/polybot-app"
-        aws_region = "us-east-2"
-        s3_bucket = "danchik-s3liter-bucket" // Your S3 bucket environment variable
-        sns_topic_arn = "arn:aws:sns:us-east-2:023196572641:Jenkins-Build-Run" // SNS ARN Topic
+        aws_region = "us-east-2"               // Replace with your AWS region
+        ecr_registry = "023196572641.dkr.ecr.us-east-2.amazonaws.com"  // Replace with your AWS ECR registry
+        ecr_repo = "${ecr_registry}/danchik/polybot-app" // Replace with your ECR repository
+        image_tag = "v$BUILD_NUMBER"           // Image tag from the build pipeline
+        cluster_name = "eks-X10-prod-01"     // Replace with your EKS cluster name
+        kubeconfig_path = "~/.kube/config"     // Path to kubeconfig
+        deployment_name = "polybot-app"    // Replace with your Kubernetes deployment name
+        container_name = "polybot"      // Replace with your container name in the deployment
+        namespace = "bino-dan"                  // Kubernetes namespace
     }
 
     stages {
-        stage('Setup Docker') {
-            steps {
-                script {
-                    // Ensure Docker is ready and install multi-arch support
-                    sh "docker run --privileged --rm tonistiigi/binfmt --install all"
-                }
-            }
-        }
-
-        stage('Build docker image') {
-            steps {
-                script {
-                    parallel(
-                        amd64: {
-                            sh "docker build --platform=linux/amd64 -t polybot:${env.image_tag}-amd64 ."
-                        },
-                        arm64: {
-                            sh "docker build --platform=linux/arm64 -t polybot:${env.image_tag}-arm64 ."
-                        }
-                    )
-                }
-            }
-        }
-
-        stage('Sec Scan Stage') {
-            steps {
-                script {
-                    parallel(
-                        "Trivy Scan AMD64": {
-                            sh "trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_amd64 polybot:${env.image_tag}-amd64"
-                        },
-                        "Trivy Scan ARM64": {
-                            sh "trivy image --severity HIGH,CRITICAL --ignore-unfixed --output trivy_report_arm64 polybot:${env.image_tag}-arm64"
-                        }
-                    )
-                    archiveArtifacts artifacts: 'trivy_report_*'
-                }
-            }
-        }
-
-        stage('Upload Trivy Scan Reports to S3') {
+        stage('Configure kubectl') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
@@ -68,39 +29,23 @@ pipeline {
                     credentialsId: 'Danchik AWS US-2-Ohio'
                 ]]) {
                     script {
+                        // Configure kubectl to use the EKS cluster
                         sh """
-                            aws s3 cp trivy_report_amd64 s3://${env.s3_bucket}/trivy_reports/trivy_report_amd64_${env.BUILD_NUMBER}.txt
-                            aws s3 cp trivy_report_arm64 s3://${env.s3_bucket}/trivy_reports/trivy_report_arm64_${env.BUILD_NUMBER}.txt
+                            aws eks update-kubeconfig --name ${env.cluster_name} --region ${env.aws_region} --kubeconfig ${env.kubeconfig_path}
                         """
                     }
                 }
             }
         }
 
-        stage('Push to Amazon ECR') {
+        stage('Deploy to EKS') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                    credentialsId: 'Danchik AWS US-2-Ohio'
-                ]]) {
-                    script {
-                        sh """
-                            aws ecr get-login-password --region ${env.aws_region} | docker login --username AWS --password-stdin ${env.ecr_registry}
-
-                            docker tag polybot:${env.image_tag}-amd64 ${env.ecr_repo}:${env.image_tag}-amd64
-                            docker tag polybot:${env.image_tag}-arm64 ${env.ecr_repo}:${env.image_tag}-arm64
-
-                            docker push ${env.ecr_repo}:${env.image_tag}-amd64
-                            docker push ${env.ecr_repo}:${env.image_tag}-arm64
-
-                            docker manifest create ${env.ecr_repo}:${env.image_tag} \\
-                                --amend ${env.ecr_repo}:${env.image_tag}-amd64 \\
-                                --amend ${env.ecr_repo}:${env.image_tag}-arm64
-                            docker manifest push ${env.ecr_repo}:${env.image_tag}
-                        """
-                    }
+                script {
+                    // Set the image for the deployment and initiate the rollout
+                    sh """
+                        kubectl set image deployment/${env.deployment_name} ${env.container_name}=${env.ecr_repo}:${env.image_tag} -n ${env.namespace}
+                        kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
+                    """
                 }
             }
         }
@@ -108,32 +53,10 @@ pipeline {
 
     post {
         success {
-            withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding',
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                credentialsId: 'Danchik AWS US-2-Ohio'
-            ]]) {
-                sh """
-                    aws sns publish --region ${env.aws_region} --topic-arn ${env.sns_topic_arn} \\
-                        --message "Pipeline succeeded for build #${env.BUILD_NUMBER} on ${env.JOB_NAME}" \\
-                        --subject "Jenkins Pipeline Success Notification"
-                """
-            }
+            echo "Deployment to EKS completed successfully."
         }
         failure {
-            withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding',
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                credentialsId: 'Danchik AWS US-2-Ohio'
-            ]]) {
-                sh """
-                    aws sns publish --region ${env.aws_region} --topic-arn ${env.sns_topic_arn} \\
-                        --message "Pipeline failed for build #${env.BUILD_NUMBER} on ${env.JOB_NAME}" \\
-                        --subject "Jenkins Pipeline Failure Notification"
-                """
-            }
+            echo "Deployment failed. Check logs for details."
         }
     }
 }
