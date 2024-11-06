@@ -89,8 +89,8 @@ spec:
         - name: TELEGRAM_TOKEN
           valueFrom:
             secretKeyRef:
-              name: Bino-Dan-Telegram-Token
-              key: TELEGRAM_TOKEN
+              name: bino-dan-telegram-token
+              key: telegram_token
 EOF
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
