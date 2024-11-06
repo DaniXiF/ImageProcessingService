@@ -85,6 +85,12 @@ spec:
         image: ${env.ecr_repo}:${env.image_tag}
         ports:
         - containerPort: 80
+        env:
+        - name: TELEGRAM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: Bino-Dan-Telegram-Token
+              key: TELEGRAM_TOKEN
 EOF
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
