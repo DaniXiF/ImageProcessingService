@@ -44,15 +44,26 @@ pipeline {
         stage('Fetch Secrets') {
             steps {
                 script {
-                    // Fetch the TELEGRAM_TOKEN from AWS Secrets Manager and export it as an environment variable
-                    env.TELEGRAM_TOKEN = sh(
+                    // Fetch TELEGRAM_TOKEN and TELEGRAM_APP_URL from AWS Secrets Manager and export them as environment variables
+                    def secretValues = sh(
                         script: """
                             aws secretsmanager get-secret-value \
                                 --region ${aws_region} \
                                 --secret-id bino-dan-telegram-token \
                                 --query SecretString \
-                                --output text | jq -r .TELEGRAM_TOKEN
+                                --output text
                         """,
+                        returnStdout: true
+                    ).trim()
+
+                    // Parse both values using jq
+                    env.TELEGRAM_TOKEN = sh(
+                        script: "echo '${secretValues}' | jq -r .TELEGRAM_TOKEN",
+                        returnStdout: true
+                    ).trim()
+
+                    env.TELEGRAM_APP_URL = sh(
+                        script: "echo '${secretValues}' | jq -r .TELEGRAM_APP_URL",
                         returnStdout: true
                     ).trim()
                 }
@@ -104,8 +115,10 @@ spec:
         env:
         - name: TELEGRAM_TOKEN
           value: "${env.TELEGRAM_TOKEN}"
+        - name: TELEGRAM_APP_URL
+          value: "${env.TELEGRAM_APP_URL}"
         ports:
-        - containerPort: 8443
+        - containerPort: 80
 EOF
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
