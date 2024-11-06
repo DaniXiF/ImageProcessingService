@@ -105,7 +105,7 @@ spec:
         - name: TELEGRAM_TOKEN
           value: "${env.TELEGRAM_TOKEN}"
         ports:
-        - containerPort: 80
+        - containerPort: 8443
 EOF
                         kubectl rollout status deployment/${env.deployment_name} -n ${env.namespace}
                     """
