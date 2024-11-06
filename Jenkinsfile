@@ -41,6 +41,24 @@ pipeline {
             }
         }
 
+        stage('Fetch Secrets') {
+            steps {
+                script {
+                    // Fetch the TELEGRAM_TOKEN from AWS Secrets Manager and export it as an environment variable
+                    env.TELEGRAM_TOKEN = sh(
+                        script: """
+                            aws secretsmanager get-secret-value \
+                                --region ${aws_region} \
+                                --secret-id bino-dan-telegram-token \
+                                --query SecretString \
+                                --output text | jq -r .TELEGRAM_TOKEN
+                        """,
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+
         stage('Configure kubectl') {
             steps {
                 withCredentials([[
@@ -83,6 +101,9 @@ spec:
       containers:
       - name: ${env.container_name}
         image: ${env.ecr_repo}:${env.image_tag}
+        env:
+        - name: TELEGRAM_TOKEN
+          value: "${env.TELEGRAM_TOKEN}"
         ports:
         - containerPort: 80
 EOF
